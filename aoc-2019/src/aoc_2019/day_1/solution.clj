@@ -2,8 +2,7 @@
 
 (defn process-line
   [line]
-  ( - (quot (Integer/parseInt line) 3) 2)
-)
+  (- (quot (Integer/parseInt line) 3) 2))
 
 (defn solve
   []
@@ -11,7 +10,4 @@
     (->>
       (clojure.string/split-lines (slurp "src/aoc_2019/day_1/input"))
       (map process-line)
-      (reduce +)
-    )
-  )
-)
+      (reduce +))))

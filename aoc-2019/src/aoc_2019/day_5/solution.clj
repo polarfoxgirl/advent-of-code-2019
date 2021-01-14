@@ -18,7 +18,7 @@
   [[op modes]]
   [op
    (case op
-     (1 2) (assoc modes 2 1)
+     (1 2 7 8) (assoc modes 2 1)
      (3) (assoc modes 0 1)
      modes)])
 
@@ -30,7 +30,6 @@
 (defn get-param
   [cmds pos modes i]
   (let [val (nth cmds (+ pos i 1))]
-      ; (println (format "Got mode %d and val %d for param %d" (nth modes i) val i))
     (case (nth modes i)
       0 (nth cmds val)
       1 val)))
@@ -39,7 +38,10 @@
   [op modes state]
   (let [cmds (state :cmds)
         pos (state :pos)
-        param_cnt (if (contains? #{1 2} op) 3 1)]
+        param_cnt (case op
+                    (1 2 7 8) 3
+                    (3 4) 1
+                    (5 6) 2)]
      [(map #(get-param cmds pos modes %) (range param_cnt))
       (assoc state :pos (+ pos 1 param_cnt))]))
 
@@ -55,6 +57,14 @@
     ; (println (format "Writing %d to output" val))
     (update state :output #(cons val %))))
 
+(defn jump-if
+  [state pred val]
+  (do
+    ; (println (format "Cond: if %s jump to %d" pred val))
+    (if pred
+      (assoc state :pos val)
+      state)))
+
 (defn apply-op
   [op modes state]
   (let [[params upd_state] (read-op-params op modes state)]
@@ -65,13 +75,22 @@
       3 (write-to-pos upd_state
                       (nth params 0)
                       (upd_state :input))
-      4 (append-to-output upd_state (nth params 0)))))
+      4 (append-to-output upd_state (first params))
+      (5 6) (jump-if upd_state
+                     ((if (= op 5) not= =) 0 (nth params 0))
+                     (nth params 1))
+      (7 8) (write-to-pos upd_state
+                          (nth params 2)
+                          (if ((if (= op 7) < =)
+                               (nth params 0) (nth params 1))
+                            1
+                            0)))))
+
 
 (defn execute
   [init_state]
   (loop [state init_state]
     (let [[op modes] (get-current-op state)]
-      ; (println (format "Op %d with modes %s" op (str modes)))
       (if (= op 99)
         state
         (recur (apply-op op modes state))))))
@@ -79,7 +98,7 @@
 (defn solve
   []
   (let [cmds (parse-input "src/aoc_2019/day_5/input")]
-    (execute {:cmds cmds
-              :pos 0
-              :input 1
-              :output '()})))
+    ((execute {:cmds cmds
+               :pos 0
+               :input 5
+               :output '()}) :output)))

@@ -51,7 +51,7 @@
   (let [orbit_pairs (parse-input "src/aoc_2019/day_6/input")
         orbit_map (reduce process-orbit {} orbit_pairs)
         depth_map (orbit-bfs orbit_map)]
-    ; (count-orbits depth_map)
+    ; (count-orbits depth_map)))
     (let [sun_map (into {} (map #(vec (reverse %)) orbit_pairs))
           you "YOU"
           san "SAN"]
